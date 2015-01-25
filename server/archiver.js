@@ -7,24 +7,27 @@ let Promise = require("bluebird"),
     AssetGraph = require("assetgraph"),
     streamifer = require("streamifier"),
     mongoose = require("mongoose"),
-    //Grid = require("gridfs-stream"),
-    mongo = mongoose.mongo,
-    Grid = mongo.Grid,
+    Grid = mongoose.mongo.Grid,
     path = require("path"),
     parseTorrent = require("parse-torrent"),
     createTorrent = Promise.promisify(require("create-torrent")),
     Torrent = require("./model/Torrent");
 
 // Async magic!
-//Promise.promisifyAll(Grid);
-//Promise.promisifyAll(Grid.prototype);
+// FIXME: Move this to async-grid module
+Promise.promisifyAll(Grid);
+Promise.promisifyAll(Grid.prototype);
+
+// TODO: Some parts of this module really should be static or instance methods on Page/Torrent
 
 // XXX: Should the saving of objects be the responsibility of the caller, or the model methods themselves?
 let buildUrlTorrent = Promise.coroutine(function *(url) {
     let urlTorrent = new Torrent({
         type: Torrent.TYPE_URL,
         url: url,
-        data: yield createTorrent(new Buffer(url), { name: "pageUrl" })
+        data: yield createTorrent(new Buffer(JSON.stringify({
+            pageUrl: url
+        })), { name: "url.json" })
     });
 
     return urlTorrent.saveAsync().get(0);
