@@ -18,6 +18,7 @@ let url = require("url"),
     assert = require("assert"),
     app = koa();
 
+// FIXME: This module does too much, split routes into their own modules, and likely move some functionality to Page/Torrent
 function *archivePage() {
     /* jshint validthis: true */
 

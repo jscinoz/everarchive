@@ -1,3 +1,9 @@
+## Current priorities ##
+* Experiment with dht.{lookup,announce}, using url sha1 hash to retrieve page .torrent
+* Figure out how to fix assetgraph url issue, fork if necessary
+
+
+## Misc tasks ##
 * Hook outgoing links, notify user they're leaving archive
 * Package as node-webkit app :3
 * Mobile (cordova?) app? :O
