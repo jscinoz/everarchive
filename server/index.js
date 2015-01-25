@@ -18,34 +18,6 @@ let url = require("url"),
     assert = require("assert"),
     app = koa();
 
-// TODO: Hook outgoing links, notify user they're leaving archive
-// TODO: Package as node-webkit app :3
-// TODO: Mobile (cordova?) app? :O
-// FIXME: Errors in assetgraph being swallowed. FIX DIS
-// TODO: Render pages in web component for style encapsulation, or render huge and have a hidable, pos-absolute overlay
-// TODO: Provide ability to download zip, magnet, torrent file, also cache these
-// TODO: Provide image mode as well as html mode
-// TODO: Allow client to seed too! :D
-// TODO: Handle archiving multiple revisions of page - WILL BREAK DATA COMPAT
-// TODO: AUdit gridfs-stream memory usage (Is issue #58 fixed?)
-// TODO: robots.txt
-// TODO: Document that model methods return promises
-// TODO: move let declarations to closer to first use
-// TODO: rename this file to web.js, do only webserver stuff here
-// TODO: Investigate if we should use trackers or not
-// TODO: Change most model methods & statics to return promises, rather than directly being generators
-// TODO: Remove most asserts (or only run in dev mode), and write tests
-// TODO: Follow on from above, null & type checking, error handling
-// TODO: Spdy push of assets
-// TODO: load config from nconf
-// TODO: Redis for caching known URLs & torrents
-// TODO: Support precompiled client resources AND on-the-fly compile
-// TODO: Suppotr CORS
-// TODO: See if we can have webtorrent read/write directly to gridfs (seems possible from webtorrent source - give array of streams)
-// TODO: Validate input url is text/html - we don't want people directly archiving huge binary files... Or do we?
-// TODO: if in production mode (NODE_ENV), disable mongoose autoIndex
-// TODO: Consider queing crwaler tasks?
-
 function *archivePage() {
     /* jshint validthis: true */
 
