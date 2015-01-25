@@ -70,6 +70,33 @@ pageSchema.static("findByUrl", function(pageUrl) {
 });
 
 /*
+    If we are archiving a page, then we create:
+        PageTorrent: Contains all page assets (this is content.torrent)
+        URLTorrent: Contains url.json and content.torrent
+
+    But, if we are retrieving page, all we have is the URL..
+    From this URL, we need to get URLTorrent, but if we don't know the content,
+    then how can we know the infohash for URLTorrent?
+
+*/
+
+pageSchema.static("retrieveFromURLTorrent", Promise.coroutine(function *(urlTorrent) {
+    // TODO: Fetch URL torrent, then load contained torrent
+}));
+
+pageSchema.static("tryRetrieve", Promise.coroutine(function *(pageUrl) {
+    // XXX: Is there any point trying to retreive the url torrent, if we don't have the page, it's unlikely we'll have this
+    let urlTorrent = yield Torrent.findOneAsync({
+        type: Torrent.TYPE_URL,
+        url: pageUrl
+    });
+
+    console.log(urlTorrent);
+    
+    return Page.retrieveFromURLTorrent(urlTorrent); 
+}));
+
+/*
 pageSchema.static("exists", Promise.coroutine(function *(pageUrl) {
     return (yield Page.countAsync({ url: pageUrl })) > 0;
 }));

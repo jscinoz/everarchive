@@ -51,15 +51,26 @@ function *getArchivedPage() {
     let resource = this.params.resource;
     let page = yield Page.findByUrl(pageUrl);
 
-    // TODO: return message that page isn't archived, ask user if they wish
-    // to archive it
-    if (!page) this.throw(404, "Page not yet archived");
-    
-//    if (resource)
-    // TODO: stream out page html content, SPDY push all other resources
-    // XXX: Confirm that we never have a page object without a local cache  
 
-    this.body = page;
+    if (!page) {
+        // Attempt to retrieve page from torrent
+        page = yield Page.tryRetrieve(url);    
+    }
+
+    // TODO: If page isn't in local cache, look up torrent. If it exists, start downloading & present feedback page to user.
+    // TODO: If page isn't archived _anywhere_ return message that page isn't archived, ask user if they wish to archive it
+    if (!page) {
+        this.throw(404, "Page not yet archived");
+    }
+    
+    if (!resource) {
+        resource = "/index.html";
+    }
+
+    // TODO: SPDY push?
+    // XXX: Confirm that we never have a page object without a local cache  
+    this.type = page.getResourceContentType(resource);
+    this.body = page.getResourceStream(resource);
 }
 
 // Log all the things!
