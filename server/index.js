@@ -18,6 +18,14 @@ let url = require("url"),
     assert = require("assert"),
     app = koa();
 
+// TODO: Hook outgoing links, notify user they're leaving archive
+// TODO: Package as node-webkit app :3
+// TODO: Mobile (cordova?) app? :O
+// FIXME: Errors in assetgraph being swallowed. FIX DIS
+// TODO: Render pages in web component for style encapsulation, or render huge and have a hidable, pos-absolute overlay
+// TODO: Provide ability to download zip, magnet, torrent file, also cache these
+// TODO: Provide image mode as well as html mode
+// TODO: Allow client to seed too! :D
 // TODO: Handle archiving multiple revisions of page - WILL BREAK DATA COMPAT
 // TODO: AUdit gridfs-stream memory usage (Is issue #58 fixed?)
 // TODO: robots.txt
@@ -49,13 +57,14 @@ function *archivePage() {
     let alreadyArchived = page !== null;
 
     if (!alreadyArchived) {
+        // TODO: This takes a while, need to show progress
         page = yield Page.archive(pageUrl);
     }
 
     assert(page !== null, "Page is null");
     assert(page !== undefined, "Page is undefined");
 
-    // TODO: pass through status, flash message?
+    // TODO: pass through status (already archived / archived successfully), flash message?
     this.redirect("/archive/" + encodeURIComponent(page.url));
 }
 
