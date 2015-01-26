@@ -88,13 +88,13 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
            appropriate queries, rather than this mess */
         if (origUrl === rootUrl) {
             // Special case for root page
-            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + "/index.html");
-        } else if (rootUrlRE.test(origUrl)) {
-            // On-site asset
-            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + parsedUrl.path); 
+            newUrl = "/index.html";
         } else {
-            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + parsedUrl.path);
+            newUrl = parsedUrl.path;
         }
+
+        // Resolve URL prior to actually updating asset
+        newUrl = rootUrlParsed.resolve(parsedUrl.hostname + newUrl);
 
         if (!asset.fileName) {
             console.log("No file name for " + newUrl);
