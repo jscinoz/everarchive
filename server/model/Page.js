@@ -10,6 +10,7 @@ let Promise = require("bluebird"),
     ObjectId = Schema.Types.ObjectId,
     Grid = require("gridfs-stream"),
     Archiver = require("../archiver"),
+    Torrent = require("./Torrent"),
     Page;
 
 // TODO: Add validation & constraints to schema
