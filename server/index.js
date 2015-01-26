@@ -5,6 +5,7 @@
 
 let WebService = require("./services/WebService.js"),
     TorrentService = require("./services/TorrentService.js"),
+    LookupService = require("./services/LookupService.js"),
     mongoose = require("mongoose"),
     db = mongoose.connection,
     // TODO: Get port from nconf or similar
@@ -12,16 +13,22 @@ let WebService = require("./services/WebService.js"),
        and set properly from nconf or similar
     */
     webService = new WebService({ port: process.argv[2] }),
-    torrentService = new TorrentService();
+    torrentService = new TorrentService(),
+    lookupService = new LookupService();
 
 // TODO: Proper logging
 db.on("error", console.error.bind(console, "Mongoose connection error:"));
 
 db.once("open", function() {
-    webService.start();
-    torrentService.start();
+    Promise.all([
+        // FIXME: These are async, is this really what we want?
+        torrentService.start(),
+        lookupService.start()
+    ]).then(function() {
+        webService.start();
 
-    console.log("EverArchive server startup complete");
+        console.log("EverArchive server startup complete");
+    });
 });
 
 // TODO: Automate database creation?
