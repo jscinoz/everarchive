@@ -4,6 +4,8 @@
 
 
 ## Misc tasks ##
+* Need to give some consideration to upgrade path - we don't want to leave
+  orphaned torrents
 * Hook outgoing links, notify user they're leaving archive
 * Package as node-webkit app :3
 * Mobile (cordova?) app? :O
