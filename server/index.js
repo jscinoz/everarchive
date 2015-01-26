@@ -18,12 +18,14 @@ let url = require("url"),
     assert = require("assert"),
     app = koa();
 
-// FIXME: This module does too much, split routes into their own modules, and likely move some functionality to Page/Torrent
+/* FIXME: This module does too much, split routes into their own modules, and
+   likely move some functionality to Page/Torrent */
 function *archivePage() {
     /* jshint validthis: true */
 
     // TODO: null checking
-    // TODO: Strip hash from URL (maybe? are we gonna try execute any page scripts?)
+    /* TODO: Strip hash from URL (maybe? are we gonna try execute any page
+       scripts?) */
     // XXX: Parse url?
     let pageUrl = this.request.body.url;
     let page = yield Page.findByUrl(pageUrl);
@@ -37,7 +39,8 @@ function *archivePage() {
     assert(page !== null, "Page is null");
     assert(page !== undefined, "Page is undefined");
 
-    // TODO: pass through status (already archived / archived successfully), flash message?
+    /* TODO: pass through status (already archived / archived successfully),
+       flash message? */
     this.redirect("/archive/" + encodeURIComponent(page.url));
 }
 
@@ -58,8 +61,10 @@ function *getArchivedPage() {
         page = yield Page.tryRetrieve(url);    
     }
 
-    // TODO: If page isn't in local cache, look up torrent. If it exists, start downloading & present feedback page to user.
-    // TODO: If page isn't archived _anywhere_ return message that page isn't archived, ask user if they wish to archive it
+    /* TODO: If page isn't in local cache, look up torrent. If it exists, start
+       downloading & present feedback page to user. */
+    /* TODO: If page isn't archived _anywhere_ return message that page isn't
+       archived, ask user if they wish to archive it */
     if (!page) {
         this.throw(404, "Page not yet archived");
     }
@@ -67,7 +72,7 @@ function *getArchivedPage() {
     if (!resource) {
         resource = "index.html";
 
-        // Need to redirect to index.html so the browser resolves relative URLs correctly
+        // Need to redirect so the browser resolves relative URLs correctly
         // FIXME: Would be nice to not require this redirect
         this.redirect(this.url + "/index.html");
     }

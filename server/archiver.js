@@ -36,7 +36,9 @@ let buildUrlTorrent = Promise.coroutine(function *(pageUrl) {
 
 let crawlUrl = Promise.coroutine(function *(pageUrl) {
     // TODO: Cleanup decls, define closest to first use
-    // FIXME: Should probably not include scripts. If we don't include them, we need to strip them out of the graph too. see removeEmptyJavaScripts transform
+    /* FIXME: Should probably not include scripts. If we don't include them, we
+       need to strip them out of the graph too. see removeEmptyJavaScripts
+       transform */
     // TODO: Also, script out dead scripts (i.e. those on other domains);
     // TODO: Probably also ignore RSS/Atom feeds
     let ignoredTypes = [ "HtmlAnchor" ],
@@ -48,13 +50,15 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
         // XXX: Put under global requires?
         query = AssetGraph.query;
 
-    // FIXME: Would be nice if we could get large assets (like images) as streams to avoid potential memory issues. See assetgraph #52
+    /* FIXME: Would be nice if we could get large assets (like images) as
+       streams to avoid potential memory issues. See assetgraph #52 */
 
     let crawlDeferred = Promise.defer();
 
     // TODO: Use addAsset to output crawl progress
     graph.on("addAsset", function(asset) {
-        // TODO create promise for each asset, resolve in load callback, use these to display overall progress
+        /* TODO create promise for each asset, resolve in load callback, use
+           these to display overall progress */
         // TODO: Proper logging
         console.log("Loading " + asset.urlOrDescription + "...");
 
@@ -74,14 +78,14 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
     })
     // XXX: Rename files to hash of contents?
     .moveAssets({
-        isInline: false/*,
-        url: query.not(rootUrl)
-        */
+        isInline: false
     }, function(asset) {
         let origUrl = asset.url,
             parsedUrl = url.parse(origUrl),
             newUrl;
             
+        /* XXX: Would it be better to use multiple moveAssets transforms with
+           appropriate queries, rather than this mess */
         if (origUrl === rootUrl) {
             // Special case for root page
             newUrl = rootUrlParsed.resolve(parsedUrl.hostname + "/index.html");
@@ -100,15 +104,14 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
 
         console.log("Moving " + origUrl + " -> " + newUrl);
 
-        // FIXME: This doesn't seem to actually rewrite URLs in page index - WTF?
-        // TODO: Come back to this when we've received a response to issue #234
         return newUrl; 
     })
     // TODO: Remove script tags?
     //.moveAssets({ url: rootUrl }, "/index.html")
     // XXX: Better query?
     .updateRelations({}, { hrefType: "relative" })
-    // TODO: We still need unarchived root-relative URLs to point to the right place, so we may need to rewrite HTMLAnchors still
+    /* TODO: We still need unarchived root-relative URLs to point to the right
+       place, so we may need to rewrite HTMLAnchors still */
     // TODO: Any unhandled assets (HtmlAnchors), make URLS absolute
     // TODO: Instead of doing index special case later, do it in transform here
     .run(function() {
@@ -144,8 +147,10 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
     });
 });
 
-// XXX: Maybe expose infohash for validation purposes - so multiple instances of the gateway can prove real copy
-let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page, fileBuffers) {
+/* XXX: Maybe expose infohash for validation purposes - so multiple instances
+   of the gateway can prove real copy */
+let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page,
+                                                    fileBuffers) {
     let pageTorrent = new Torrent({
         type: Torrent.TYPE_PAGE,
         page: page,
@@ -180,7 +185,9 @@ let archive = Promise.coroutine(function *(page) {
             return Promise.props({
                 path: buffer.name,
                 contentType: buffer.contentType,
-                // TODO: Implement a writeAssetsToGridFS transform for assetgraph, and store assets there. Then, create torrent based on data in gfs
+                /* TODO: Implement a writeAssetsToGridFS transform for
+                   assetgraph, and store assets there. Then, create torrent
+                   based on data in gfs */
                 fileId: gfs.putAsync(buffer, {
                     content_type: buffer.contentType
                 }).get("_id")

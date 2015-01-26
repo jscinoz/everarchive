@@ -88,7 +88,8 @@ pageSchema.static("retrieveFromURLTorrent", Promise.coroutine(function *(urlTorr
 }));
 
 pageSchema.static("tryRetrieve", Promise.coroutine(function *(pageUrl) {
-    // XXX: Is there any point trying to retreive the url torrent, if we don't have the page, it's unlikely we'll have this
+    /* XXX: Is there any point trying to retreive the url torrent, if we don't
+       have the page, it's unlikely we'll have this */
     let urlTorrent = yield Torrent.findOneAsync({
         type: Torrent.TYPE_URL,
         url: pageUrl
