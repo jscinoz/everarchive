@@ -35,6 +35,8 @@ WebService.prototype.setupMiddleware = function() {
     // Serve static files
     app.use(fileServer);
 
+    // TODO: Perhaps add middleware to normalise URL (deal with trailing slashes)
+
     // Set up router
     app.use(router(app));
 };

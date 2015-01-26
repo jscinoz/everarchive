@@ -27,7 +27,8 @@ let pageSchema = new Schema({
     torrent: { type: ObjectId, ref: "Torrent" }
 });
 
-// XXX: Add url hash virtual
+/* XXX: Add url hash virtual, or add as proper field, but have validation to
+   ensure hash is up to date */
 
 pageSchema.static("archive", function(pageUrl) {
     let page = new Page({
