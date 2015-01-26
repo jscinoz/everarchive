@@ -5,6 +5,7 @@
 
 let Promise = require("bluebird"),
     mongoose = require("mongoose"),
+    url = require("url"),
     Schema = mongoose.Schema,
     ObjectId = Schema.Types.ObjectId,
     Grid = require("gridfs-stream"),
@@ -28,12 +29,13 @@ let pageSchema = new Schema({
 });
 
 pageSchema.method("getResourceByPath", function(path) {
+    let resolvedPath = [url.parse(this.url).hostname, path].join("/");
     let resources = this.resources;
 
     for (let i = 0, ii = resources.length; i < ii; ++i) {
         let resource = resources[i];
 
-        if (resource.path === path) {
+        if (resource.path === resolvedPath) {
             return resource;
         }
     }

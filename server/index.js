@@ -65,7 +65,11 @@ function *getArchivedPage() {
     }
     
     if (!resource) {
-        resource = "/index.html";
+        resource = "index.html";
+
+        // Need to redirect to index.html so the browser resolves relative URLs correctly
+        // FIXME: Would be nice to not require this redirect
+        this.redirect(this.url + "/index.html");
     }
 
     // TODO: SPDY push?

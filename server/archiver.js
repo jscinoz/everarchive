@@ -6,6 +6,7 @@
 let Promise = require("bluebird"),
     AssetGraph = require("assetgraph"),
     streamifer = require("streamifier"),
+    url = require("url"),
     mongoose = require("mongoose"),
     Grid = mongoose.mongo.Grid,
     path = require("path"),
@@ -21,30 +22,33 @@ Promise.promisifyAll(Grid.prototype);
 // TODO: Some parts of this module really should be static or instance methods on Page/Torrent
 
 // XXX: Should the saving of objects be the responsibility of the caller, or the model methods themselves?
-let buildUrlTorrent = Promise.coroutine(function *(url) {
+let buildUrlTorrent = Promise.coroutine(function *(pageUrl) {
     let urlTorrent = new Torrent({
         type: Torrent.TYPE_URL,
-        url: url,
+        url: pageUrl,
         data: yield createTorrent(new Buffer(JSON.stringify({
-            pageUrl: url
+            pageUrl: pageUrl
         })), { name: "url.json" })
     });
 
     return urlTorrent.saveAsync().get(0);
 });
 
-let crawlUrl = Promise.coroutine(function *(url) {
+let crawlUrl = Promise.coroutine(function *(pageUrl) {
     // TODO: Cleanup decls, define closest to first use
     // FIXME: Should probably not include scripts. If we don't include them, we need to strip them out of the graph too. see removeEmptyJavaScripts transform
     // TODO: Also, script out dead scripts (i.e. those on other domains);
+    // TODO: Probably also ignore RSS/Atom feeds
     let ignoredTypes = [ "HtmlAnchor" ],
         // FIXME: NEED URL VALIDATION
-        rootUrl = url,
-        graph = new AssetGraph(),
+        rootUrl = pageUrl,
+        rootUrlRE = new RegExp("^" + rootUrl),
+        rootUrlParsed = url.parse(rootUrl),
+        graph = new AssetGraph({ root: rootUrl }),
         // XXX: Put under global requires?
         query = AssetGraph.query;
 
-    // FIXME: Perhaps just use assetgraph to collect URLs, and still use node-crawler to actually fetch, stream content directly to gridfs? (current approach will likely have memory issues, maybe)
+    // FIXME: Would be nice if we could get large assets (like images) as streams to avoid potential memory issues. See assetgraph #52
 
     let crawlDeferred = Promise.defer();
 
@@ -63,39 +67,55 @@ let crawlUrl = Promise.coroutine(function *(url) {
         // XXX: Set maximum concurrency?
         followRelations: {
             // XXX: use query.not?
-            type: query.not(ignoredTypes),
+            type: query.not(ignoredTypes)/*,
             hrefType: [ "relative", "rootRelative" ]
+            */
         }
     })
     // XXX: Rename files to hash of contents?
-    .moveAssetsInOrder({
-        isInline: false,
+    .moveAssets({
+        isInline: false/*,
         url: query.not(rootUrl)
+        */
     }, function(asset) {
         let origUrl = asset.url,
-            // FIXME: Don't define regexp here, do it in module global
-            // FIXME: Shouldn't hardcode url prefix
-            newUrl = asset.url.replace(
-                new RegExp("^" + rootUrl + "/"),
-                "./"
-            );
+            parsedUrl = url.parse(origUrl),
+            newUrl;
+            
+        if (origUrl === rootUrl) {
+            // Special case for root page
+            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + "/index.html");
+        } else if (rootUrlRE.test(origUrl)) {
+            // On-site asset
+            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + parsedUrl.path); 
+        } else {
+            newUrl = rootUrlParsed.resolve(parsedUrl.hostname + parsedUrl.path);
+        }
+
+        if (!asset.fileName) {
+            console.log("No file name for " + newUrl);
+            // XXX: Bit dodgy, I think we'll need to be smarter than this.
+            asset.fileName = "index.html";
+        }
 
         console.log("Moving " + origUrl + " -> " + newUrl);
-        // TODO: as a hack, try setting asset._url directly?
 
         // FIXME: This doesn't seem to actually rewrite URLs in page index - WTF?
         // TODO: Come back to this when we've received a response to issue #234
-        return newUrl;
+        return newUrl; 
     })
     // TODO: Remove script tags?
-    .moveAssets({ url: rootUrl }, "index.html")
-    // XXX: This is for debug only, remove once working
-    .writeAssetsToDisc({ isLoaded: true }, "/tmp/ag-test-output")
+    //.moveAssets({ url: rootUrl }, "/index.html")
+    // XXX: Better query?
+    .updateRelations({}, { hrefType: "relative" })
+    // TODO: We still need unarchived root-relative URLs to point to the right place, so we may need to rewrite HTMLAnchors still
     // TODO: Any unhandled assets (HtmlAnchors), make URLS absolute
     // TODO: Instead of doing index special case later, do it in transform here
     .run(function() {
         crawlDeferred.resolve();
     });
+
+    // TODO: Asset deduplication?
 
     // TODO: Probably need timeouts and other limits to prevent runaway
 
@@ -104,10 +124,8 @@ let crawlUrl = Promise.coroutine(function *(url) {
 
     return graph.findAssets({ isInline: false }).map(function(asset) {
         // TODO: Null checking
-        // FIXME: Don't define regexp here, do it in module global
-        let resourcePath = asset.url.replace(new RegExp("^" + rootUrl), ""); 
+        let resourcePath = asset.url.replace(rootUrlRE, "");
 
-        console.log("resourcePath: " + resourcePath);
 
         // TODO: Probably worth defining a type for this extended buffer
         let contentBuf = asset.rawSrc;
@@ -119,8 +137,8 @@ let crawlUrl = Promise.coroutine(function *(url) {
             contentBuf.contentType = asset.contentType;
         }
 
-        // FIXME: Need to be consistent with leading / or ./ or none
-        contentBuf.name = resourcePath;
+        // Strip leading slash for file/buffer name
+        contentBuf.name = resourcePath.replace(/^\//, "");
 
         return contentBuf;
     });
@@ -132,6 +150,7 @@ let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page, fileBuffer
         type: Torrent.TYPE_PAGE,
         page: page,
         data: yield createTorrent(fileBuffers, {
+            // TODO: Set comment to URL
             name: parseTorrent(urlTorrent).infoHash 
         })
     });
@@ -140,19 +159,19 @@ let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page, fileBuffer
 });
 
 let archive = Promise.coroutine(function *(page) {
-    let url = page.url,
+    let pageUrl = page.url,
         // XXX: Create URL torrent in page constructor?
         urlTorrent = yield Torrent.findByUrl(url),
         pageTorrent = yield Torrent.findByPage(page);
 
     if (!urlTorrent) {
-        urlTorrent = yield buildUrlTorrent(url);
+        urlTorrent = yield buildUrlTorrent(pageUrl);
     }
 
     // TODO: Attempt to retrieve pageTorrent from urlTorrent
 
     if (!pageTorrent) {
-        let fileBuffers = yield crawlUrl(url);
+        let fileBuffers = yield crawlUrl(pageUrl);
 
         pageTorrent = yield buildPageTorrent(urlTorrent, page, fileBuffers); 
 
