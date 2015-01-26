@@ -1,6 +1,8 @@
 ## Current priorities ##
-* Experiment with dht.{lookup,announce}, using url sha1 hash to retrieve page .torrent
-* Figure out how to fix assetgraph url issue, fork if necessary
+* Write torrent server
+* Complete code to retrieve page .torrent from dht
+* Write frontend
+* Add progress events throughout
 
 
 ## Misc tasks ##
@@ -26,9 +28,8 @@
 * Follow on from above, null & type checking, error handling
 * Spdy push of assets
 * load config from nconf
-* Redis for caching known URLs & torrents
 * Support precompiled client resources AND on-the-fly compile
-* Suppotr CORS
+* Support CORS
 * See if we can have webtorrent read/write directly to gridfs (seems possible from webtorrent source - give array of streams)
 * Validate input url is text/html - we don't want people directly archiving huge binary files... Or do we?
 * if in production mode (NODE_ENV), disable mongoose autoIndex
