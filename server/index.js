@@ -8,7 +8,10 @@ let WebService = require("./services/WebService.js"),
     mongoose = require("mongoose"),
     db = mongoose.connection,
     // TODO: Get port from nconf or similar
-    webService = new WebService({ port: 3000 }),
+    /* FIXME: Reading port from command-line arguments is just for dev, remove
+       and set properly from nconf or similar
+    */
+    webService = new WebService({ port: process.argv[2] }),
     torrentService = new TorrentService();
 
 // TODO: Proper logging
@@ -23,4 +26,11 @@ db.once("open", function() {
 
 // TODO: Automate database creation?
 // TODO: get DB conn params from nconf
-mongoose.connect("mongodb://localhost/everarchive");
+
+/* FIXME: Getting db name from args is just for dev, remove this and get it from
+   from nconf or similar */
+let dbName = process.argv[3] || "everarchive";
+
+console.log("Using database: " + dbName);
+
+mongoose.connect("mongodb://localhost/" + dbName);
