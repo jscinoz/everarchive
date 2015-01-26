@@ -1,5 +1,5 @@
 /* jshint globalstrict: true */
-/* global require, module, __dirname, Buffer */
+/* global require, module, Buffer */
 
 "use strict";
 
@@ -12,7 +12,7 @@ let Promise = require("bluebird"),
     path = require("path"),
     parseTorrent = require("parse-torrent"),
     createTorrent = Promise.promisify(require("create-torrent")),
-    Torrent = require("./model/Torrent");
+    Torrent = require("../model/Torrent");
 
 // Async magic!
 // FIXME: Move this to async-grid module

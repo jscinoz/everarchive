@@ -1,5 +1,5 @@
 /* jshint globalstrict: true */
-/* global require, module, __dirname, Buffer */
+/* global require, module */
 
 "use strict";
 
@@ -9,7 +9,7 @@ let Promise = require("bluebird"),
     Schema = mongoose.Schema,
     ObjectId = Schema.Types.ObjectId,
     Grid = require("gridfs-stream"),
-    Archiver = require("../archiver"),
+    Archiver = require("../util/archiver"),
     Torrent = require("./Torrent"),
     Page;
 
@@ -87,7 +87,7 @@ pageSchema.static("retrieveFromURLTorrent", Promise.coroutine(function *(urlTorr
     // TODO: Fetch URL torrent, then load contained torrent
 }));
 
-pageSchema.static("tryRetrieve", Promise.coroutine(function *(pageUrl) {
+pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(pageUrl) {
     /* XXX: Is there any point trying to retreive the url torrent, if we don't
        have the page, it's unlikely we'll have this */
     let urlTorrent = yield Torrent.findOneAsync({
@@ -95,7 +95,7 @@ pageSchema.static("tryRetrieve", Promise.coroutine(function *(pageUrl) {
         url: pageUrl
     });
 
-    console.log(urlTorrent);
+    console.log("urlTorrent: " + urlTorrent);
     
     return Page.retrieveFromURLTorrent(urlTorrent); 
 }));

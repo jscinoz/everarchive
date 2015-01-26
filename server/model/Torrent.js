@@ -1,5 +1,5 @@
 /* jshint globalstrict: true */
-/* global require, module, __dirname, Buffer */
+/* global require, module, Buffer */
 
 "use strict";
 
