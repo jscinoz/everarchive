@@ -5,8 +5,7 @@
 
 let Promise = require("bluebird"),
     DHT = require("bittorrent-dht"),
-    // TODO Add promisified version of sha1 to util library
-    sha1 = require("simple-sha1");
+    sha1 = require("./sha1");
 
 // Assumes DHT is pre-initialised and fully ready
 function getPeers(dht, infoHash, numPeers) {
@@ -55,10 +54,7 @@ let getTorrentDataForUrl = Promise.coroutine(function *(pageUrl) {
 
     // XXX: Probably want to re-use a single DHT instance
     let dhtReadyDeferred = Promise.defer();
-    let hashDeferred = Promise.defer();
     let dht = new DHT();
-
-    sha1(pageUrl, function (hash) { hashDeferred.resolve(hash); });
 
     dht.on("ready", function() {
         console.log("DHT is ready.");
@@ -71,10 +67,9 @@ let getTorrentDataForUrl = Promise.coroutine(function *(pageUrl) {
     // Yield until DHT is ready
     yield dhtReadyDeferred.promise;
 
-    let peers = yield getPeer(dht, yield hashDeferred.promise);
+    let peers = yield getPeer(dht, yield sha1(pageUrl));
 
     console.log(peers);
-
 
     // TODO
     return new Buffer();

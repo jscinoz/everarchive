@@ -7,7 +7,7 @@ let Promise = require("bluebird"),
     AssetGraph = require("assetgraph"),
     streamifer = require("streamifier"),
     url = require("url"),
-    sha1 = Promise.promisify(require("simple-sha1")),
+    sha1 = require("./sha1"),
     mongoose = require("mongoose"),
     Grid = mongoose.mongo.Grid,
     path = require("path"),
@@ -141,21 +141,15 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
    the model methods themselves? */
 let buildPageTorrent = Promise.coroutine(function *(page, fileBuffers) {
     let pageUrl = page.url,
-        hashDeferred = Promise.defer(),
         pageTorrent = new Torrent({
             url: pageUrl,
-            page: page
+            page: page,
+            data: yield createTorrent(fileBuffers, {
+                // TODO: Set createdBy to everarchive name + version
+                comment: pageUrl,
+                name: yield sha1(pageUrl)
+            })
         });
-
-    sha1(pageUrl, function(hash) {
-        hashDeferred.resolve(hash);
-    });
-
-    pageTorrent.data = yield createTorrent(fileBuffers, {
-        // TODO: Set createdBy to everarchive name + version
-        comment: pageUrl,
-        name: yield hashDeferred.promise
-    });
 
     return pageTorrent.saveAsync().get(0);
 });
