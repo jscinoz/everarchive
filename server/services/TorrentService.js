@@ -10,7 +10,8 @@ function TorrentService() {
 }
 
 TorrentService.prototype.start = function() {
-    // TODO
+    // TODO: Start seeding all torrents 
 };
+
 
 module.exports = TorrentService;

@@ -24,10 +24,38 @@ let pageSchema = new Schema({
         contentType: String,
         fileId: ObjectId
     }],
-    pageTorrent: { type: ObjectId, ref: "Torrent" },
-    // XXX: This could be a virtual, if createTorrent is deterministic
-    urlTorrent: { type: ObjectId, ref: "Torrent" }
+    torrent: { type: ObjectId, ref: "Torrent" }
 });
+
+// XXX: Add url hash virtual
+
+pageSchema.static("archive", function(pageUrl) {
+    let page = new Page({
+        url: pageUrl
+    });
+
+    return Archiver.archive(page);
+});
+
+pageSchema.static("findByUrl", function(pageUrl) {
+    return Page.findOneAsync({ url: pageUrl });
+});
+
+pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(pageUrl) {
+    let newPage = new Page({
+            url: pageUrl
+        }),
+        // XXX: Need to ensure this throws if torrent can't be found
+        newTorrent = newPage.torrent = yield Torrent.lookupDht(newPage);
+
+    // Populate resources in GridFS from torrent
+    newPage.resources = yield newTorrent.getResources();
+
+    // FIXME: This is wrong. We must retrieve the original archivedOn value
+    // page.archivedOn = Date.now();
+
+    return newPage.saveAsync().get(0);
+}));
 
 pageSchema.method("getResourceByPath", function(path) {
     let resolvedPath = [url.parse(this.url).hostname, path].join("/");
@@ -60,18 +88,6 @@ pageSchema.method("getResourceContentType", function(path) {
     return resource.contentType;
 });
 
-pageSchema.static("archive", function(pageUrl) {
-    let page = new Page({
-        url: pageUrl
-    });
-
-    return Archiver.archive(page);
-});
-
-pageSchema.static("findByUrl", function(pageUrl) {
-    return Page.findOneAsync({ url: pageUrl });
-});
-
 /*
     If we are archiving a page, then we create:
         PageTorrent: Contains all page assets (this is content.torrent)
@@ -82,23 +98,6 @@ pageSchema.static("findByUrl", function(pageUrl) {
     then how can we know the infohash for URLTorrent?
 
 */
-
-pageSchema.static("retrieveFromURLTorrent", Promise.coroutine(function *(urlTorrent) {
-    // TODO: Fetch URL torrent, then load contained torrent
-}));
-
-pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(pageUrl) {
-    /* XXX: Is there any point trying to retreive the url torrent, if we don't
-       have the page, it's unlikely we'll have this */
-    let urlTorrent = yield Torrent.findOneAsync({
-        type: Torrent.TYPE_URL,
-        url: pageUrl
-    });
-
-    console.log("urlTorrent: " + urlTorrent);
-    
-    return Page.retrieveFromURLTorrent(urlTorrent); 
-}));
 
 /*
 pageSchema.static("exists", Promise.coroutine(function *(pageUrl) {

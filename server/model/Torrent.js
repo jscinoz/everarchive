@@ -6,53 +6,55 @@
 let Promise = require("bluebird"),
     mongoose = require("mongoose"),
     parseTorrent = require("parse-torrent"),
+    dhtUtils = require("../util/dht"),
     Schema = mongoose.Schema,
     ObjectId = Schema.Types.ObjectId,
     Torrent;
 
-const TYPE_PAGE = "page",
-      TYPE_URL = "url";
-
 // XXX: Do we want to mirror the API exposed by webtorrent's torrent objects?
 let torrentSchema = new Schema({
-    type: { type: String, enum: [ TYPE_PAGE, TYPE_URL ]},
     // TODO: rename data -> metadata
     data: Buffer,
     // TODO: add files array, using gridfs
     page: { type: ObjectId, ref: "Page" },
-    // XXX: Perhaps make URL be its own type?
-    url: String
+});
+
+torrentSchema.virtual("url").get(function() {
+    return this.page.url;
 });
 
 torrentSchema.virtual("infoHash").get(function() {
     return parseTorrent(this.data).infoHash;
 });
 
-// See if constants actually work
+torrentSchema.static("lookupDht", Promise.coroutine(function *(page) {
+    let newTorrent = new Torrent({ page: page });
 
-torrentSchema.static("createFromPage", function(page) {
-    // TODO
-});
+    /* FIXME: This could take a while, or potentially never resolve, if there
+       are no seeds available. Need to handle this cleanly */
+    newTorrent.data = yield dhtUtils.getTorrentDataForUrl(page.url);
 
-torrentSchema.static("findByUrl", function(url) {
-    return Torrent.findOneAsync({
-        type: TYPE_URL,
-        url: url
-    });
-});
+    return newTorrent.saveAsync().get(0);
+}));
 
 torrentSchema.static("findByPage", function(page) {
-    return Torrent.findOneAsync({
-        type: TYPE_PAGE,
-        page: page
-    });
+    return Torrent.findOneAsync({ page: page });
 });
 
-Torrent = mongoose.model("Torrent", torrentSchema); 
+// XXX: This method would likely be better placed elsewhere
+torrentSchema.method("getResources", Promise.coroutine(function *(){
+    /* TODO: download torrent, for each file therein return this structure:
+        {
+            path: <relative path>,
+            contentType: <sniffed content type>,
+            fileId: <Object id of file saved to gridfs>
+        }
+    */
+    
+    return [];
+}));
 
-// TODO: Use defineProperty to ensure immutable
-Torrent.TYPE_URL = TYPE_URL;
-Torrent.TYPE_PAGE = TYPE_PAGE;
+Torrent = mongoose.model("Torrent", torrentSchema); 
 
 Promise.promisifyAll(Torrent);
 Promise.promisifyAll(Torrent.prototype);

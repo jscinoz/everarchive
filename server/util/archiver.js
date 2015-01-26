@@ -7,6 +7,7 @@ let Promise = require("bluebird"),
     AssetGraph = require("assetgraph"),
     streamifer = require("streamifier"),
     url = require("url"),
+    sha1 = Promise.promisify(require("simple-sha1")),
     mongoose = require("mongoose"),
     Grid = mongoose.mongo.Grid,
     path = require("path"),
@@ -20,19 +21,6 @@ Promise.promisifyAll(Grid);
 Promise.promisifyAll(Grid.prototype);
 
 // TODO: Some parts of this module really should be static or instance methods on Page/Torrent
-
-// XXX: Should the saving of objects be the responsibility of the caller, or the model methods themselves?
-let buildUrlTorrent = Promise.coroutine(function *(pageUrl) {
-    let urlTorrent = new Torrent({
-        type: Torrent.TYPE_URL,
-        url: pageUrl,
-        data: yield createTorrent(new Buffer(JSON.stringify({
-            pageUrl: pageUrl
-        })), { name: "url.json" })
-    });
-
-    return urlTorrent.saveAsync().get(0);
-});
 
 let crawlUrl = Promise.coroutine(function *(pageUrl) {
     // TODO: Cleanup decls, define closest to first use
@@ -71,9 +59,7 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
         // XXX: Set maximum concurrency?
         followRelations: {
             // XXX: use query.not?
-            type: query.not(ignoredTypes)/*,
-            hrefType: [ "relative", "rootRelative" ]
-            */
+            type: query.not(ignoredTypes)
         }
     })
     // XXX: Rename files to hash of contents?
@@ -98,7 +84,9 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
 
         if (!asset.fileName) {
             console.log("No file name for " + newUrl);
-            // XXX: Bit dodgy, I think we'll need to be smarter than this.
+
+            /* XXX: Bit dodgy, I think we'll need to be smarter than this, 
+               maybe based on content type? */
             asset.fileName = "index.html";
         }
 
@@ -149,15 +137,24 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
 
 /* XXX: Maybe expose infohash for validation purposes - so multiple instances
    of the gateway can prove real copy */
-let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page,
-                                                    fileBuffers) {
-    let pageTorrent = new Torrent({
-        type: Torrent.TYPE_PAGE,
-        page: page,
-        data: yield createTorrent(fileBuffers, {
-            // TODO: Set comment to URL
-            name: parseTorrent(urlTorrent).infoHash 
-        })
+/* XXX: Should the saving of objects be the responsibility of the caller, or
+   the model methods themselves? */
+let buildPageTorrent = Promise.coroutine(function *(page, fileBuffers) {
+    let pageUrl = page.url,
+        hashDeferred = Promise.defer(),
+        pageTorrent = new Torrent({
+            url: pageUrl,
+            page: page
+        });
+
+    sha1(pageUrl, function(hash) {
+        hashDeferred.resolve(hash);
+    });
+
+    pageTorrent.data = yield createTorrent(fileBuffers, {
+        // TODO: Set createdBy to everarchive name + version
+        comment: pageUrl,
+        name: yield hashDeferred.promise
     });
 
     return pageTorrent.saveAsync().get(0);
@@ -165,20 +162,14 @@ let buildPageTorrent = Promise.coroutine(function *(urlTorrent, page,
 
 let archive = Promise.coroutine(function *(page) {
     let pageUrl = page.url,
-        // XXX: Create URL torrent in page constructor?
-        urlTorrent = yield Torrent.findByUrl(url),
         pageTorrent = yield Torrent.findByPage(page);
-
-    if (!urlTorrent) {
-        urlTorrent = yield buildUrlTorrent(pageUrl);
-    }
 
     // TODO: Attempt to retrieve pageTorrent from urlTorrent
 
     if (!pageTorrent) {
         let fileBuffers = yield crawlUrl(pageUrl);
 
-        pageTorrent = yield buildPageTorrent(urlTorrent, page, fileBuffers); 
+        pageTorrent = yield buildPageTorrent(page, fileBuffers); 
 
         let gfs = new Grid(mongoose.connection.db); 
         page.resources = yield Promise.map(fileBuffers, function(buffer) {
@@ -199,8 +190,7 @@ let archive = Promise.coroutine(function *(page) {
     // page. Defer saving until the end? How does it transactional
 
     // TODO: Download torrent, populate content & resources on page
-    page.urlTorrent = urlTorrent;
-    page.pageTorrent = pageTorrent;
+    page.torrent = pageTorrent;
 
     page.archivedOn = Date.now();
 
