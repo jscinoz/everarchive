@@ -3,9 +3,11 @@
 * Complete code to retrieve page .torrent from dht
 * Write frontend
 * Add progress events throughout
-
+* Implement GridFSStorage for webtorrent
+* Implement writeAssetsToGridFS transform for assetgraph
 
 ## Misc tasks ##
+* Some external resources not being archived (e.g: typekit js when testing against http://nodejs.org)
 * Need to give some consideration to upgrade path - we don't want to leave
   orphaned torrents
 * Hook outgoing links, notify user they're leaving archive
@@ -17,11 +19,10 @@
 * Provide image mode as well as html mode
 * Allow client to seed too! :D
 * Handle archiving multiple revisions of page - WILL BREAK DATA COMPAT
-* AUdit gridfs-stream memory usage (Is issue #58 fixed?)
+* Audit gridfs-stream memory usage (Is gridfs-stream issue #58 fixed?)
 * robots.txt
 * Document that model methods return promises
 * move let declarations to closer to first use
-* rename this file to web.js, do only webserver stuff here
 * Investigate if we should use trackers or not
 * Change most model methods & statics to return promises, rather than directly being generators
 * Remove most asserts (or only run in dev mode), and write tests
@@ -30,7 +31,6 @@
 * load config from nconf
 * Support precompiled client resources AND on-the-fly compile
 * Support CORS
-* See if we can have webtorrent read/write directly to gridfs (seems possible from webtorrent source - give array of streams)
 * Validate input url is text/html - we don't want people directly archiving huge binary files... Or do we?
 * if in production mode (NODE_ENV), disable mongoose autoIndex
-* Consider queing crwaler tasks?
+* Consider queing crawler tasks?
