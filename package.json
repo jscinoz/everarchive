@@ -11,6 +11,7 @@
   "license": "AGPL-1.0",
   "dependencies": {
     "assetgraph": "^1.15.3",
+    "bittorrent-dht": "^2.6.4",
     "bluebird": "^2.8.2",
     "create-torrent": "^3.7.1",
     "gridfs-stream": "^0.5.3",
@@ -24,6 +25,7 @@
     "nconf": "^0.7.1",
     "parse-torrent": "^3.0.1",
     "redis": "^0.12.1",
+    "simple-sha1": "^2.0.7",
     "streamifier": "^0.1.0",
     "webtorrent": "^0.26.0"
   }
