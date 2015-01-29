@@ -7,7 +7,6 @@ let path = require("path"),
     koa = require("koa"),
     router = require("koa-router"),
     logger = require("koa-logger"),
-    bodyParser = require("koa-body"),
     mongoose = require("mongoose"),
     fileServer = require("koa-file-server")({
         // TODO: Get the client file path in a cleaner / more robust way
@@ -23,7 +22,7 @@ function WebService(options) {
     this.port = options.port || 3000;
 
     this.setupMiddleware();
-    this.registerRoutes();
+    routes.register(this.app);
 }
 
 WebService.prototype.setupMiddleware = function() {
@@ -39,14 +38,6 @@ WebService.prototype.setupMiddleware = function() {
 
     // Set up router
     app.use(router(app));
-};
-
-WebService.prototype.registerRoutes = function() {
-    let app = this.app;
-
-    // Route registration
-    app.get("/archive/:pageUrl/:resource*", routes.getArchivedPage);
-    app.post("/archive", bodyParser(), routes.archivePage);
 };
 
 WebService.prototype.start = function() {
