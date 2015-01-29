@@ -42,12 +42,12 @@ pageSchema.static("findByUrl", function(pageUrl) {
     return Page.findOneAsync({ url: pageUrl });
 });
 
-pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(pageUrl) {
+pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(lookupService, pageUrl) {
     let newPage = new Page({
             url: pageUrl
         }),
         // XXX: Need to ensure this throws if torrent can't be found
-        newTorrent = newPage.torrent = yield Torrent.lookupDht(newPage);
+        newTorrent = newPage.torrent = yield Torrent.lookupDht(lookupService, newPage);
 
     // Populate resources in GridFS from torrent
     newPage.resources = yield newTorrent.getResources();

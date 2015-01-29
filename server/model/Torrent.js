@@ -27,12 +27,15 @@ torrentSchema.virtual("infoHash").get(function() {
     return parseTorrent(this.data).infoHash;
 });
 
-torrentSchema.static("lookupDht", Promise.coroutine(function *(page) {
+torrentSchema.static("lookupDht", Promise.coroutine(function *(lookupService, page) {
     let newTorrent = new Torrent({ page: page });
 
     /* FIXME: This could take a while, or potentially never resolve, if there
        are no seeds available. Need to handle this cleanly */
-    newTorrent.data = yield dhtUtils.getTorrentDataForUrl(page.url);
+    newTorrent.data = yield dhtUtils.getTorrentDataForUrl(lookupService, page.url);
+
+    // XXX: Handle this better
+    if (!newTorrent.data) throw new Error("no torrent data! :<");
 
     return newTorrent.saveAsync().get(0);
 }));

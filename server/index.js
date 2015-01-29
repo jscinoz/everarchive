@@ -14,7 +14,7 @@ let WebService = require("./services/WebService.js"),
     */
     webService = new WebService({ port: process.argv[2] }),
     torrentService = new TorrentService(),
-    lookupService = new LookupService();
+    lookupService = new LookupService(webPort);
 
 // TODO: Proper logging
 db.on("error", console.error.bind(console, "Mongoose connection error:"));
@@ -26,6 +26,10 @@ db.once("open", function() {
         lookupService.start()
     ]).then(function() {
         webService.start();
+
+        // XXX: Needed?
+        //webService.torrentService = torrentService;
+        webService.app.lookupService = lookupService;
 
         console.log("EverArchive server startup complete");
     });
