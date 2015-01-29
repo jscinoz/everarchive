@@ -12,7 +12,8 @@ let WebService = require("./services/WebService.js"),
     /* FIXME: Reading port from command-line arguments is just for dev, remove
        and set properly from nconf or similar
     */
-    webService = new WebService({ port: process.argv[2] }),
+    webPort = process.argv[2],
+    webService = new WebService({ port: webPort }),
     torrentService = new TorrentService(),
     lookupService = new LookupService(webPort);
 
@@ -20,11 +21,15 @@ let WebService = require("./services/WebService.js"),
 db.on("error", console.error.bind(console, "Mongoose connection error:"));
 
 db.once("open", function() {
+    // FIXME: Probably want timeouts on the service startups
     Promise.all([
         // FIXME: These are async, is this really what we want?
         torrentService.start(),
         lookupService.start()
     ]).then(function() {
+        /* FIXME: We can probably start the webservice earlier, but any requests
+           that depend on torrent/lookup service will need to yield until said
+           service is ready */
         webService.start();
 
         // XXX: Needed?
