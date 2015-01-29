@@ -18,7 +18,7 @@ function *getArchivedPage() {
 
     if (!page) {
         // Attempt to retrieve page from torrent
-        page = yield Page.retrieveArchivedPage(pageUrl);    
+        page = yield Page.retrieveArchivedPage(this.app.lookupService, pageUrl);
     }
 
     /* TODO: If page isn't in local cache, look up torrent. If it exists, start
