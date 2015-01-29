@@ -7,6 +7,7 @@
 * Implement writeAssetsToGridFS transform for assetgraph
 
 ## Misc tasks ##
+* Proxy support?
 * Some external resources not being archived (e.g: typekit js when testing against http://nodejs.org)
 * Need to give some consideration to upgrade path - we don't want to leave
   orphaned torrents
@@ -34,3 +35,4 @@
 * Validate input url is text/html - we don't want people directly archiving huge binary files... Or do we?
 * if in production mode (NODE_ENV), disable mongoose autoIndex
 * Consider queing crawler tasks?
+* redis caching (LRU?) of data from gridfs - would this even be necessary? probably not
