@@ -22,7 +22,7 @@ function *archivePage() {
 
     if (!alreadyArchived) {
         // TODO: This takes a while, need to show progress
-        page = yield Page.archive(pageUrl);
+        page = yield Page.archive(this.app.lookupService, pageUrl);
     }
 
     // XXX: Remove asserts, proper exception handling

@@ -41,7 +41,7 @@ LookupService.prototype.getPeers = function(infoHash, numPeers) {
         peersFound = 0,
         onPeer = function(addr, peerInfoHash, from) {
             if (peerInfoHash === infoHash) {
-                console.log("Found peer for " + infoHash + ": " + addr);
+                console.log("Got peer from " + from + " for " + infoHash + ": " + addr);
                 peerDeferreds[peersFound].resolve(addr);
 
                 peersFound++;
@@ -71,39 +71,42 @@ LookupService.prototype.getPeer = function(infoHash) {
     return this.getPeers(infoHash, 1);
 };
 
-LookupService.prototype.start = Promise.coroutine(function *() {
-    let self = this,
-        dht = self.dht;
 
+LookupService.prototype.announcePage = Promise.coroutine(function *(page) {
+    let announceDeferred = Promise.defer(),
+        urlHash = yield sha1(page.url),
+        dht = this.dht;
+
+    // Ensure DHT is ready
+    yield this.ready;
+
+    // TODO: Find module to find random unbound port + upnp
+    // XXX: This port number is just for testing
+    // A bit of a hack, but we announce the web port, and expect other
+    // instances of everarchive to then do a HTTP GET for the 
+    // /torrent/:pageUrl endpoint
+    console.log("Announcing hash " + urlHash + " on port " + this.webPort + "...");
+
+    dht.announce(urlHash, this.webPort, function(error) {
+        if (error) {
+            announceDeferred.reject(error);
+        } else {
+            console.log("Announced hash " + urlHash + ".");
+
+            announceDeferred.resolve();
+        }
+    });
+
+    return announceDeferred.promise;
+});
+
+
+LookupService.prototype.start = Promise.coroutine(function *() {
     console.log("Starting lookup service...");
 
+    yield Page.findAsync().each(this.announcePage);
 
-    yield Page.findAsync().each(Promise.coroutine(function *(page) {
-        let urlHash = yield sha1(page.url),
-            announceDeferred = Promise.defer();
-        // Ensure DHT is ready
-        yield self.ready;
-
-        console.log("Announcing hash " + urlHash + " on port " + self.webPort + "...");
-
-        // TODO: Find module to find random unbound port + upnp
-        // XXX: This port number is just for testing
-        // A bit of a hack, but we announce the web port, and expect other
-        // instances of everarchive to then do a HTTP GET for the 
-        // /torrent/:pageUrl endpoint
-        dht.announce(urlHash, self.webPort, function(error) {
-            if (error) {
-                announceDeferred.reject(error);
-            } else {
-                console.log("Announced hash " + urlHash + ".");
-
-                console.log("Lookup service startup complete.");
-                announceDeferred.resolve();
-            }
-        });
-
-        return announceDeferred.promise;
-    }));
+    console.log("Lookup service startup complete.");
 });
 
 module.exports = LookupService;

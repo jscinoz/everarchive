@@ -30,12 +30,12 @@ let pageSchema = new Schema({
 /* XXX: Add url hash virtual, or add as proper field, but have validation to
    ensure hash is up to date */
 
-pageSchema.static("archive", function(pageUrl) {
+pageSchema.static("archive", function(lookupService, pageUrl) {
     let page = new Page({
         url: pageUrl
     });
 
-    return Archiver.archive(page);
+    return Archiver.archive(lookupService, page);
 });
 
 pageSchema.static("findByUrl", function(pageUrl) {

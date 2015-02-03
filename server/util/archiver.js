@@ -90,8 +90,6 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
             asset.fileName = "index.html";
         }
 
-        console.log("Moving " + origUrl + " -> " + newUrl);
-
         return newUrl; 
     })
     // TODO: Remove script tags?
@@ -154,7 +152,7 @@ let buildPageTorrent = Promise.coroutine(function *(page, fileBuffers) {
     return pageTorrent.saveAsync().get(0);
 });
 
-let archive = Promise.coroutine(function *(page) {
+let archive = Promise.coroutine(function *(lookupService, page) {
     let pageUrl = page.url,
         pageTorrent = yield Torrent.findByPage(page);
 
@@ -189,7 +187,12 @@ let archive = Promise.coroutine(function *(page) {
     page.archivedOn = Date.now();
 
     // Note: save always returns an array, even for a single document
-    return page.saveAsync().get(0); 
+    yield page.saveAsync().get(0);
+
+    // Announce we have page FIXME: This comment is derp, much drunk 
+    yield lookupService.announcePage(page);
+
+    return page;
 });
 
 module.exports.archive = archive;
