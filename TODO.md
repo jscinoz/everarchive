@@ -6,6 +6,15 @@
 * Implement GridFSStorage for webtorrent
 * Implement writeAssetsToGridFS transform for assetgraph
 
+## Configuration ##
+* Web port
+* DHT port
+* Torrent port
+* Proxy settings
+
+## Rework ##
+* Figure out a cleaner way for assorted modules to access lookupService and torrentService without passing it around everywhere
+
 ## Misc tasks ##
 * Proxy support?
 * Some external resources not being archived (e.g: typekit js when testing against http://nodejs.org)
