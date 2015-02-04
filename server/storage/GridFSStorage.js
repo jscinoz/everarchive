@@ -3,28 +3,36 @@
 
 "use strict";
 
-let Storage = require("webtorrent/lib/storage");
+let Storage = require("webtorrent/lib/storage"),
+    Grid = require("gridfs-stream"),
+    inherits = require("util").inherits;
 
-function GridFSStorage(parsedTorrent, opts) {
-    // TODO: extend opts with defaults
-    // TODO: Throw if mandatory defaults (db) not provided
-    /* TODO: Options to include:
-        * db
-        * mongo
-    */
+inherits(GridFSStorage, Storage);
 
-    Storage.call(this, parsedTorrent, opts);
+// When providing this to webtorrent, need to .bind(null, <preOpts>)
+function GridFSStorage(preOpts, parsedTorrent, opts) {
+    // XXX: Are there any other opts we need?
 
+    // TODO: Nicer error messages?
+    if (!preOpts.db) throw new TypeError("Missing db option");
+    if (!preOpts.mongo) throw new TypeError("Missing mongo option");
+
+    Storage.call(this, parsedTorrent, preOpts);
+
+    this.gfs = new Grid(preOpts.db, preOpts.mongo); 
 }
-
-GridFSStorage.prototype = Object.create(Storage);
-
-GridFSStorage.prototype.writeBlock = function(index, offset, buffer, cb) {
-    // TODO
-};
 
 GridFSStorage.prototype.readBlock = function(index, offset, length, cb) {
     // TODO
+    console.log("GridFSStorage#readBlock not implemented");
+};
+
+GridFSStorage.prototype._onPieceDone = function(piece) {
+    // TODO
+    console.log("GridFSStorage#_onPieceDone not implemented");
+
+
+    Storage.prototype._onPieceDone.call(this, piece);
 };
 
 GridFSStorage.prototype.remove = function(cb) {
