@@ -13,7 +13,8 @@ let Promise = require("bluebird"),
     path = require("path"),
     parseTorrent = require("parse-torrent"),
     createTorrent = Promise.promisify(require("create-torrent")),
-    Torrent = require("../model/Torrent");
+    Torrent = require("../model/Torrent"),
+    debug = require("debug")("archiver");
 
 // Async magic!
 // FIXME: Move this to async-grid module
@@ -22,6 +23,7 @@ Promise.promisifyAll(Grid.prototype);
 
 // TODO: Some parts of this module really should be static or instance methods on Page/Torrent
 
+// FIXME: Errors (host resolution failure, others) are being swallowed silently
 let crawlUrl = Promise.coroutine(function *(pageUrl) {
     // TODO: Cleanup decls, define closest to first use
     /* FIXME: Should probably not include scripts. If we don't include them, we
@@ -48,10 +50,10 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
         /* TODO create promise for each asset, resolve in load callback, use
            these to display overall progress */
         // TODO: Proper logging
-        console.log("Loading " + asset.urlOrDescription + "...");
+        debug("Loading " + asset.urlOrDescription + "...");
 
         asset.on("load", function(asset) {
-            console.log("Loaded " + asset.urlOrDescription + ".");
+            debug("Loaded " + asset.urlOrDescription + ".");
         });
     })
     .loadAssets(rootUrl)
@@ -83,7 +85,7 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
         newUrl = rootUrlParsed.resolve(parsedUrl.hostname + newUrl);
 
         if (!asset.fileName) {
-            console.log("No file name for " + newUrl);
+            debug("No file name for " + newUrl);
 
             /* XXX: Bit dodgy, I think we'll need to be smarter than this, 
                maybe based on content type? */
@@ -115,7 +117,6 @@ let crawlUrl = Promise.coroutine(function *(pageUrl) {
         // TODO: Null checking
         let resourcePath = asset.url.replace(rootUrlRE, "");
 
-
         // TODO: Probably worth defining a type for this extended buffer
         let contentBuf = asset.rawSrc;
         if (asset.contentType === "application/x-javascript") { 
@@ -146,6 +147,7 @@ let buildPageTorrent = Promise.coroutine(function *(page, fileBuffers) {
                 // TODO: Set createdBy to everarchive name + version
                 comment: pageUrl,
                 name: yield sha1(pageUrl)
+                // XXX: There's no way to create a trackerless torrent with create-torrent?
             })
         });
 

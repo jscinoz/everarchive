@@ -6,7 +6,8 @@
 let Promise = require("bluebird"),
     Page = require("../model/Page"),
     sha1 = require("../util/sha1"),
-    DHT = require("bittorrent-dht");
+    DHT = require("bittorrent-dht"),
+    debug = require("debug")("LookupService");
 
 // TODO: Notify of newly added torrents
 function LookupService(webPort) {
@@ -14,8 +15,8 @@ function LookupService(webPort) {
     let dht = new DHT();
 
     // TODO: Propper logging, winston?
-    dht.on("listening", console.log.bind(console, "DHT listening on port %d"));
-    dht.on("error", console.error.bind(console, "DHT error: "));
+    dht.on("listening", debug.bind(null, "DHT listening on port %d"));
+    dht.on("error", debug.bind(null, "DHT error: "));
 
     dht.on("ready", function() {
         readyDeferred.resolve();
@@ -40,8 +41,9 @@ LookupService.prototype.getPeers = function(infoHash, numPeers) {
         peerDeferreds = [],
         peersFound = 0,
         onPeer = function(addr, peerInfoHash, from) {
+            debug("Got peer from " + from + " for " + infoHash + ": " + addr);
+
             if (peerInfoHash === infoHash) {
-                console.log("Got peer from " + from + " for " + infoHash + ": " + addr);
                 peerDeferreds[peersFound].resolve(addr);
 
                 peersFound++;
@@ -58,7 +60,7 @@ LookupService.prototype.getPeers = function(infoHash, numPeers) {
 
     dht.on("peer", onPeer);
 
-    console.log("Looking up peers for " + infoHash);
+    debug("Looking up peers for " + infoHash);
 
     dht.lookup(infoHash);
 
@@ -72,39 +74,40 @@ LookupService.prototype.getPeer = function(infoHash) {
 };
 
 
-LookupService.prototype.announcePage = Promise.coroutine(function *(page) {
-    let announceDeferred = Promise.defer(),
-        urlHash = yield sha1(page.url),
-        dht = this.dht;
+LookupService.prototype.announcePage = function(page) {
+    let self = this;
 
-    // Ensure DHT is ready
-    yield this.ready;
+    // Ensure DHT is ready before doing the actual announce
+    return self.ready.then(Promise.coroutine(function *() {
+        let announceDeferred = Promise.defer(),
+            urlHash = yield sha1(page.url),
+            dht = self.dht;
 
-    // TODO: Find module to find random unbound port + upnp
-    // XXX: This port number is just for testing
-    // A bit of a hack, but we announce the web port, and expect other
-    // instances of everarchive to then do a HTTP GET for the 
-    // /torrent/:pageUrl endpoint
-    console.log("Announcing hash " + urlHash + " on port " + this.webPort + "...");
+        // TODO: Find module to find random unbound port + upnp
+        // XXX: This port number is just for testing
+        // A bit of a hack, but we announce the web port, and expect other
+        // instances of everarchive to then do a HTTP GET for the 
+        // /torrent/:pageUrl endpoint
+        debug("Announcing hash " + urlHash + " on port " + self.webPort + "...");
 
-    dht.announce(urlHash, this.webPort, function(error) {
-        if (error) {
-            announceDeferred.reject(error);
-        } else {
-            console.log("Announced hash " + urlHash + ".");
+        dht.announce(urlHash, self.webPort, function(error) {
+            if (error) {
+                announceDeferred.reject(error);
+            } else {
+                debug("Announced hash " + urlHash + ".");
 
-            announceDeferred.resolve();
-        }
-    });
+                announceDeferred.resolve();
+            }
+        });
 
-    return announceDeferred.promise;
-});
-
+        return announceDeferred.promise;
+    }));
+};
 
 LookupService.prototype.start = Promise.coroutine(function *() {
     console.log("Starting lookup service...");
 
-    yield Page.findAsync().each(this.announcePage);
+    yield Page.findAsync().each(this.announcePage.bind(this));
 
     console.log("Lookup service startup complete.");
 });

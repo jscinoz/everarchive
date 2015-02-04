@@ -5,7 +5,8 @@
 
 let Storage = require("webtorrent/lib/storage"),
     Grid = require("gridfs-stream"),
-    inherits = require("util").inherits;
+    inherits = require("util").inherits,
+    debug = require("debug")("GridFSStorage");
 
 inherits(GridFSStorage, Storage);
 
@@ -24,13 +25,12 @@ function GridFSStorage(preOpts, parsedTorrent, opts) {
 
 GridFSStorage.prototype.readBlock = function(index, offset, length, cb) {
     // TODO
-    console.log("GridFSStorage#readBlock not implemented");
+    debug("GridFSStorage#readBlock not implemented");
 };
 
 GridFSStorage.prototype._onPieceDone = function(piece) {
     // TODO
-    console.log("GridFSStorage#_onPieceDone not implemented");
-
+    debug("GridFSStorage#_onPieceDone not implemented");
 
     Storage.prototype._onPieceDone.call(this, piece);
 };

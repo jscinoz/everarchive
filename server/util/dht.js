@@ -4,7 +4,8 @@
 "use strict";
 
 let Promise = require("bluebird"),
-    sha1 = require("./sha1");
+    sha1 = require("./sha1"),
+    debug = require("debug")("dht");
 
 // TODO: Rework to use LookupService
 let getTorrentDataForUrl = Promise.coroutine(function *(lookupService, pageUrl) {
@@ -14,7 +15,7 @@ let getTorrentDataForUrl = Promise.coroutine(function *(lookupService, pageUrl) 
     // TODO; Look up dht for sha1 of given url, return .torrent data for
     // corresponding page data. resolve with null (or throw?) otherwise
 
-    console.log("Got peer: " + peer);
+    debug("Got peer: " + peer);
 
     // TODO
     return null;

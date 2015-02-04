@@ -14,6 +14,7 @@
     "bittorrent-dht": "^2.6.4",
     "bluebird": "^2.8.2",
     "create-torrent": "^3.7.1",
+    "debug": "^2.1.1",
     "gridfs-stream": "^0.5.3",
     "hiredis": "^0.1.17",
     "koa": "^0.15.0",

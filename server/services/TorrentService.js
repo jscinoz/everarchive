@@ -8,7 +8,8 @@ let Promise = require("bluebird"),
     parseTorrent = require("parse-torrent"),
     mongoose = require("mongoose"),
     GridFSStorage = require("../storage/GridFSStorage"),
-    WebTorrent = require("webtorrent");
+    WebTorrent = require("webtorrent"),
+    debug = require("debug")("TorrentService");
 
 // TODO: Notify of newly added torrents
 function TorrentService() {
@@ -29,7 +30,7 @@ TorrentService.prototype.start = Promise.coroutine(function *() {
         let parsedTorrent = parseTorrent(torrent.data),
             torrentDeferred = Promise.defer();
 
-        console.log("Starting to seed torrent " + parsedTorrent.infoHash + "...");
+        debug("Starting to seed torrent " + parsedTorrent.infoHash + "...");
 
         client.add(parsedTorrent, {
             storage: GridFSStorage.bind(null, {
@@ -37,7 +38,7 @@ TorrentService.prototype.start = Promise.coroutine(function *() {
                 mongo: mongoose.mongo
             })
         }, function(torrent) {
-            console.log("Seeding startup complete for " + torrent.infoHash + ".");
+            debug("Seeding startup complete for " + torrent.infoHash + ".");
 
             // XXX: Do we need to actually pass out the torrent?
             torrentDeferred.resolve(torrent);
