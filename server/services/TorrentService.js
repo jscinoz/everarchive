@@ -18,34 +18,40 @@ function TorrentService() {
 
 TorrentService.prototype.start = Promise.coroutine(function *() {
     let client = this.client;
+    let startupDeferred = Promise.defer();
+    let seedPromises = [];
 
     console.log("Starting torrent service...");
-    console.log("Torrent service startup complete.");
+
     /* XXX: Need to consider scalability of this, do we really want to seed
        every torrent, or perhaps a random, rotating subset */
-/*
-    return Torrent.findAsync().each(function(torrent) {
-        // TODO: Acutally finish this
+    Torrent.findAsync().each(function(torrent) {
         let parsedTorrent = parseTorrent(torrent.data),
             torrentDeferred = Promise.defer();
 
+        console.log("Starting to seed torrent " + parsedTorrent.infoHash + "...");
+
         client.add(parsedTorrent, {
-            storage: new GridFSStorage(parsedTorrent, {
+            storage: GridFSStorage.bind(null, {
                 db: mongoose.connection.db,
                 mongo: mongoose.mongo
             })
         }, function(torrent) {
-            console.log(torrent);
-
-            console.log("Torrent service startup complete.");
+            console.log("Seeding startup complete for " + torrent.infoHash + ".");
 
             // XXX: Do we need to actually pass out the torrent?
             torrentDeferred.resolve(torrent);
         });
 
-        return torrentDeferred.promise;
+        seedPromises.push(torrentDeferred.promise);
+    }).then(function() {
+        Promise.all(seedPromises).then(function() {
+            console.log("Torrent service startup complete.");
+            startupDeferred.resolve();
+        });
     });
-*/
+
+    return startupDeferred.promise;
 });
 
 
