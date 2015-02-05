@@ -194,6 +194,10 @@ let archive = Promise.coroutine(function *(lookupService, torrentService, page) 
     // Announce we have page FIXME: This comment is derp, much drunk 
     yield lookupService.announcePage(page);
 
+    // See the new torrent!
+    yield torrentService.add(pageTorrent);
+
+
     return page;
 });
 

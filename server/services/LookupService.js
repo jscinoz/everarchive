@@ -107,7 +107,7 @@ LookupService.prototype.announcePage = function(page) {
 LookupService.prototype.start = Promise.coroutine(function *() {
     console.log("Starting lookup service...");
 
-    yield Page.findAsync().each(this.announcePage.bind(this));
+    yield Page.findAsync().map(this.announcePage.bind(this));
 
     console.log("Lookup service startup complete.");
 });

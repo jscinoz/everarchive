@@ -7,6 +7,7 @@ let Page = require("../model/Page"),
     Torrent = require("../model/Torrent"),
     sha1 = require("../util/sha1");
 
+// XXX: Handle also getting by infohash?
 function *getTorrent() {
     /* jshint validthis: true */
 
