@@ -16,6 +16,8 @@
 * Figure out a cleaner way for assorted modules to access lookupService and torrentService without passing it around everywhere
 
 ## Misc tasks ##
+* Change debug messages to be of format EverArchive.MODULE
+* Use torrent-stream, when retrieving page archived elsewhere... FOR GLORY
 * Proxy support?
 * Some external resources not being archived (e.g: typekit js when testing against http://nodejs.org)
 * Need to give some consideration to upgrade path - we don't want to leave
