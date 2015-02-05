@@ -18,10 +18,15 @@ let path = require("path"),
 // TODO: default values for unspecified options
 function WebService(options) {
     // FIXME: Use Object.defineProperty to make things immutable as appropriate
+    // TODO Validate options
+
     this.app = koa();
     this.port = options.port || 3000;
-
     this.setupMiddleware();
+
+    this.app.lookupService = options.lookupService;
+    this.app.torrentService = options.torrentService;
+
     routes.register(this.app);
 }
 

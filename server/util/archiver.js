@@ -154,7 +154,7 @@ let buildPageTorrent = Promise.coroutine(function *(page, fileBuffers) {
     return pageTorrent.saveAsync().get(0);
 });
 
-let archive = Promise.coroutine(function *(lookupService, page) {
+let archive = Promise.coroutine(function *(lookupService, torrentService, page) {
     let pageUrl = page.url,
         pageTorrent = yield Torrent.findByPage(page);
 

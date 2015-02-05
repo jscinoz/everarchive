@@ -22,7 +22,11 @@ function *getArchivedPage() {
            downloading & present feedback page to user. */
         if (!page) {
             // Attempt to retrieve page from torrent
-            page = yield Page.retrieveArchivedPage(this.app.lookupService, pageUrl);
+            page = yield Page.retrieveArchivedPage(
+                this.app.lookupService,
+                this.app.torrentService,
+                pageUrl
+            );
         }
         
         resource = "index.html";

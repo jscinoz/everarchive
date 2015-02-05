@@ -13,9 +13,13 @@ let WebService = require("./services/WebService.js"),
        and set properly from nconf or similar
     */
     webPort = process.argv[2],
-    webService = new WebService({ port: webPort }),
     torrentService = new TorrentService(),
-    lookupService = new LookupService(webPort);
+    lookupService = new LookupService(webPort),
+    webService = new WebService({
+        port: webPort,
+        torrentService: torrentService,
+        lookupService: lookupService
+    });
 
 // TODO: Proper logging
 db.on("error", console.error.bind(console, "Mongoose connection error:"));
@@ -31,10 +35,6 @@ db.once("open", function() {
            that depend on torrent/lookup service will need to yield until said
            service is ready */
         webService.start();
-
-        // XXX: Needed?
-        //webService.torrentService = torrentService;
-        webService.app.lookupService = lookupService;
 
         console.log("EverArchive server startup complete");
     });

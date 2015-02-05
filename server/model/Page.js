@@ -30,19 +30,19 @@ let pageSchema = new Schema({
 /* XXX: Add url hash virtual, or add as proper field, but have validation to
    ensure hash is up to date */
 
-pageSchema.static("archive", function(lookupService, pageUrl) {
+pageSchema.static("archive", function(lookupService, torrentService, pageUrl) {
     let page = new Page({
         url: pageUrl
     });
 
-    return Archiver.archive(lookupService, page);
+    return Archiver.archive(lookupService, torrentService, page);
 });
 
 pageSchema.static("findByUrl", function(pageUrl) {
     return Page.findOneAsync({ url: pageUrl });
 });
 
-pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(lookupService, pageUrl) {
+pageSchema.static("retrieveArchivedPage", Promise.coroutine(function *(lookupService, torrentService, pageUrl) {
     let newPage = new Page({
             url: pageUrl
         }),
